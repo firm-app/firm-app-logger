@@ -1,0 +1,14 @@
+{
+  "name": "firm-app-logger",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+  },
+  "author": "Josh Wright <josh@joshwright.com> (https://www.joshwright.com/)",
+  "license": "MIT",
+  "dependencies": {
+    "agentkeepalive": "4.2.0",
+    "axios": "0.25.0"
+  }
+}
