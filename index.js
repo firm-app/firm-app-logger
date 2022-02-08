@@ -8,7 +8,8 @@ const Agent = require('agentkeepalive');
  * Create a logger instance.
  * @param {object} options - The options for the logger.
  * @param {string} options.connectionString - The url for sending the logs.
- * @param {function=} options.onLog - Callback for every log received.
+ * @param {function=} options.onLog - Right when orig log is received.
+ * @param {function=} options.onLogged - Callback for log is flushed.
  */
 const Logger = function (options) {
   this.options = options || {};
@@ -32,12 +33,20 @@ const Logger = function (options) {
 
 Logger.prototype.flush = async function() {
   if (!this.logs.length) return;
-  const logsToSend = this.logs;
+  const logsToSend = this.logs.splice(0);
   this.logs.length = 0;
   try {
-    await axios.post(this.options.connectionString, {
-      logs: logsToSend,
-    });
+    await axios.post(
+      this.options.connectionString,
+      JSON.stringify({ logs: logsToSend }),
+      { headers: { 'Content-Type': 'application/json' } },
+    );
+
+    if (this.options.onLogged) {
+      for (const log of logsToSend) {
+        this.options.onLogged(log);
+      }
+    }
   }catch(e){
     this.logs.splice(0, 0, logsToSend);
     console.log(`Logger.flush failed (will retry soon): ${e}`);
@@ -71,16 +80,19 @@ Logger.prototype.log = function(logOrLogs) {
   if (!logOrLogs) return;
   const logs = Array.isArray(logOrLogs) ? logOrLogs : [logOrLogs];
   if (!logs.length) return;
-  for (const log of logs) {
-    log.time = log.time || Date.now();
-    this.logs.push(log);
-  }
-  this.flushSoon();
+
   if (this.options.onLog) {
     for (const log of logs) {
       this.options.onLog(log);
     }
   }
+
+  for (const log of logs) {
+    log.time = log.time || Date.now();
+    this.logs.push(log);
+  }
+
+  this.flushSoon();
 };
 
 module.exports.Logger = Logger;
