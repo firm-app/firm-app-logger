@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "release": "git push -f origin HEAD:release"
   },
   "author": "Josh Wright <josh@joshwright.com> (https://www.joshwright.com/)",
   "license": "MIT",
