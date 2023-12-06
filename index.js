@@ -48,8 +48,10 @@ Logger.prototype.flush = async function() {
       }
     }
   }catch(e){
-    this.logs.splice(0, 0, logsToSend);
-    console.log(`Logger.flush failed (will retry soon): ${e}`);
+    for (const l of logsToSend) {
+      this.logs.push(l);
+    }
+    console.log(`Logger.flush error (retry soon): ${e} [${logsToSend.length}] ${JSON.stringify(logsToSend).substring(0, 10)}...`);
     setTimeout(() => this.flushSoon(), 30000);
   }
 };
