@@ -31,29 +31,41 @@ const Logger = function (options) {
   }
 };
 
-Logger.prototype.flush = async function() {
-  if (!this.logs.length) return;
-  const logsToSend = this.logs.splice(0);
-  this.logs.length = 0;
+const sendLogs = async (logs, attempt = 1) => {
   try {
+    if (!logs || !logs.length) return;
+
     await axios.post(
       this.options.connectionString,
-      JSON.stringify({ logs: logsToSend }),
+      JSON.stringify({ logs }),
       { headers: { 'Content-Type': 'application/json' } },
     );
 
     if (this.options.onLogged) {
-      for (const log of logsToSend) {
+      for (const log of logs) {
         this.options.onLogged(log);
       }
     }
   }catch(e){
-    for (const l of logsToSend) {
-      this.logs.push(l);
-    }
-    console.log(`Logger.flush error (retry soon): ${e} [${logsToSend.length}] ${JSON.stringify(logsToSend).substring(0, 10)}...`);
-    setTimeout(() => this.flushSoon(), 30000);
+    console.log(`Logger.flush failed: ${e} [${logs.length}] ${JSON.stringify(logs).substring(0, 20)}... attempt=${attempt}`);
+
+    // Give up?
+    if (attempt > 10) return;
+
+    // Retry individually with exponential backoff
+    setTimeout(async () => {
+      for (const l of logs) {
+        await sendLogs(l, attempt + 1);
+      }
+    }, 30000 * Math.pow(attempt, 2));
   }
+};
+
+Logger.prototype.flush = async function() {
+  if (!this.logs.length) return;
+  const logsToSend = this.logs.splice(0);
+  this.logs.length = 0;
+  await sendLogs(logsToSend);
 };
 
 Logger.prototype.flushSoon = function() {
