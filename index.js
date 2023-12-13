@@ -31,7 +31,7 @@ const Logger = function (options) {
   }
 };
 
-Logger.prototype.sendLogs = async (logs, attempt = 1) => {
+Logger.prototype.sendLogs = async function (logs, attempt = 1) {
   try {
     if (!logs || !logs.length) return;
 
