@@ -31,7 +31,7 @@ const Logger = function (options) {
   }
 };
 
-const sendLogs = async (logs, attempt = 1) => {
+Logger.prototype.sendLogs = async (logs, attempt = 1) => {
   try {
     if (!logs || !logs.length) return;
 
@@ -55,7 +55,7 @@ const sendLogs = async (logs, attempt = 1) => {
     // Retry individually with exponential backoff
     setTimeout(async () => {
       for (const l of logs) {
-        await sendLogs(l, attempt + 1);
+        await this.sendLogs(l, attempt + 1);
       }
     }, 30000 * Math.pow(attempt, 2));
   }
@@ -65,7 +65,7 @@ Logger.prototype.flush = async function() {
   if (!this.logs.length) return;
   const logsToSend = this.logs.splice(0);
   this.logs.length = 0;
-  await sendLogs(logsToSend);
+  await this.sendLogs(logsToSend);
 };
 
 Logger.prototype.flushSoon = function() {
