@@ -10,6 +10,6 @@
   "license": "MIT",
   "dependencies": {
     "agentkeepalive": "4.2.0",
-    "axios": "0.25.0"
+    "axios": "1.8.3"
   }
 }
